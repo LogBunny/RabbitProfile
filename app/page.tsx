@@ -1,113 +1,169 @@
-import Image from "next/image";
+"use client";
+import { removeBackground } from "@imgly/background-removal";
+import { useEffect, useRef, useState } from "react";
+import Cropper, { ReactCropperElement } from "react-cropper";
+import "cropperjs/dist/cropper.css";
+import { CircleCheckBig, ImagePlus, Rabbit } from "lucide-react";
 
 export default function Home() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const colors = [
+    "#ff9fe5",
+    "#b3efb2",
+    "#f1d302",
+    "#020100",
+    "#6daedb",
+    "#ff9505",
+    "#018e42",
+    "#6ccff6",
+    "#540d6e",
+    "#018e42",
+    "#fb4d3d",
+    "#ffeaae",
+    "#3c7a89",
+    "#0a369d",
+  ];
+  const [selectedColor, setSelectedColor] = useState("#ffff");
+  const [imageObjectURL, setImageObjectURL] = useState("");
+  const [croppedimageObjectURL, setCroppedImageObjectURL] = useState("");
+  const cropperRef = useRef<ReactCropperElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Set the canvas dimensions to match its CSS dimensions
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+
+    // Draw a white rectangle covering the entire canvas
+    ctx.fillStyle = selectedColor;
+
+    const img = new Image();
+    img.onload = function () {
+      const aspectRatio = img.width / img.height;
+      let drawWidth, drawHeight;
+
+      if (canvas.width / canvas.height > aspectRatio) {
+        // Canvas is wider than image aspect ratio
+        drawHeight = canvas.height;
+        drawWidth = drawHeight * aspectRatio;
+      } else {
+        // Canvas is taller than image aspect ratio
+        drawWidth = canvas.width;
+        drawHeight = drawWidth / aspectRatio;
+      }
+
+      // Draw the image on the canvas centered
+      const x = (canvas.width - drawWidth) / 2;
+      const y = (canvas.height - drawHeight) / 2;
+      ctx.drawImage(img, x, y, drawWidth, drawHeight);
+    };
+    img.src = croppedimageObjectURL;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }, [selectedColor, croppedimageObjectURL, imageObjectURL]);
+
+  async function handleImage(event: any) {
+    /*  const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+*/
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const cropper = cropperRef.current?.cropper;
+    const objectUrl = URL.createObjectURL(file);
+    //
+    cropper?.replace(objectUrl);
+    console.log(objectUrl);
+    setImageObjectURL(objectUrl);
+  }
+
+  const onCrop = async () => {
+    const cropper = cropperRef.current?.cropper;
+    if (!cropper) return;
+
+    const blob = removeBackground(cropper.getCroppedCanvas().toDataURL());
+    setCroppedImageObjectURL(URL.createObjectURL(await blob));
+    //console.log(cropper.getCroppedCanvas().toDataURL());
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div className="w-[100vw] h-screen bg-slate-600 flex flex-row">
+      <div className="bg-slate-800 w-[20%] h-[100vh] p-[16px]">
+        <div className="text-white font-bold text-4xl mr-[20px] mb-[5px] flex flex-row p-[4px] gap-2">
+        <Rabbit size={49}/> Profile
+        </div>
+        <div className="text-slate-400 font-medium text-lg">Solid Colors</div>
+        <div className="flex flex-wrap gap-4 min-h-20 min-w-10">
+          {colors.map((color, idx) => (
+            <div
+              key={idx}
+              className={`w-10 h-10 rounded-md`}
+              style={{ backgroundColor: `${color}` }}
+              onClick={(e) => {
+                setSelectedColor(color);
+              }}
+            ></div>
+          ))}
         </div>
       </div>
+      <div className="min-h-screen flex justify-center items-center flex-1 flex-col gap-4">
+        {croppedimageObjectURL !== "" ? (
+          <canvas
+            ref={canvasRef}
+            className="size-[270px] rounded-[50%]"
+          ></canvas>
+        ) : (
+          <>
+            <Cropper
+              src={imageObjectURL}
+              style={{ height: 600, width: 600 }}
+              // Cropper.js options
+              initialAspectRatio={1}
+              aspectRatio={1}
+              cropBoxResizable={false}
+              minCropBoxHeight={270}
+              minContainerHeight={270}
+              controls={true}
+              guides={true}
+              //crop={onCrop}
+              ref={cropperRef}
+              shape="round"
+            />
+            {!croppedimageObjectURL &&imageObjectURL && (
+              <button
+                onClick={onCrop}
+                className="bg-white p-[8px] rounded-md flex flex-row gap-2"
+              >
+                <CircleCheckBig /> Confirm
+              </button>
+            )}
+          </>
+        )}
 
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
+        {!imageObjectURL && (
+          <>
+            <input
+              type="file"
+              name="img"
+              id="image"
+              onChange={handleImage}
+              className="hidden"
+            />
+            <label
+              htmlFor="image"
+              className="bg-white px-4 py-2 rounded cursor-pointer flex flex-row gap-2"
+            >
+              <ImagePlus />
+              Upload Image
+            </label>
+          </>
+        )}
       </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:w-full lg:max-w-5xl lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-sm opacity-50">
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className="mb-3 text-2xl font-semibold">
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className="m-0 max-w-[30ch] text-balance text-sm opacity-50">
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </div>
   );
 }
