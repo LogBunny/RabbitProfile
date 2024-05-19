@@ -3,7 +3,7 @@ import { removeBackground } from "@imgly/background-removal";
 import { useEffect, useRef, useState } from "react";
 import Cropper, { ReactCropperElement } from "react-cropper";
 import "cropperjs/dist/cropper.css";
-import { CircleCheckBig, ImagePlus, Rabbit } from "lucide-react";
+import { CircleCheckBig, Download, ImagePlus, Rabbit } from "lucide-react";
 
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -23,6 +23,7 @@ export default function Home() {
     "#3c7a89",
     "#0a369d",
   ];
+  const [loading, setLoading] = useState(false);
   const [selectedColor, setSelectedColor] = useState("#ffff");
   const [imageObjectURL, setImageObjectURL] = useState("");
   const [croppedimageObjectURL, setCroppedImageObjectURL] = useState("");
@@ -85,17 +86,27 @@ export default function Home() {
   const onCrop = async () => {
     const cropper = cropperRef.current?.cropper;
     if (!cropper) return;
-
+    setLoading(true);
     const blob = removeBackground(cropper.getCroppedCanvas().toDataURL());
     setCroppedImageObjectURL(URL.createObjectURL(await blob));
+    setLoading(false);
     //console.log(cropper.getCroppedCanvas().toDataURL());
+  };
+
+  const downloadProfile = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = "profile-image.png";
+    link.click();
   };
 
   return (
     <div className="w-[100vw] h-screen bg-slate-600 flex flex-row">
-      <div className="bg-slate-800 w-[20%] h-[100vh] p-[16px]">
+      <div className="bg-slate-800 w-[20%] h-[100vh] p-[16px] space-y-4">
         <div className="text-white font-bold text-4xl mr-[20px] mb-[5px] flex flex-row p-[4px] gap-2">
-        <Rabbit size={49}/> Profile
+          <Rabbit size={49} /> Profile
         </div>
         <div className="text-slate-400 font-medium text-lg">Solid Colors</div>
         <div className="flex flex-wrap gap-4 min-h-20 min-w-10">
@@ -110,57 +121,76 @@ export default function Home() {
             ></div>
           ))}
         </div>
+        <div className="text-slate-400 font-medium text-lg">Export</div>
+        <button
+          onClick={downloadProfile}
+          className="bg-white p-[8px] rounded-md flex flex-row gap-2"
+        >
+          <Download /> Download
+        </button>
       </div>
       <div className="min-h-screen flex justify-center items-center flex-1 flex-col gap-4">
-        {croppedimageObjectURL !== "" ? (
-          <canvas
-            ref={canvasRef}
-            className="size-[270px] rounded-[50%]"
-          ></canvas>
+        {loading ? (
+          <div className="text-white font-medium text-lg">
+          {Array.from("Processing Image...").map((char, index) => (
+            <span key={index} className="letter-animation" style={{ animationDelay: `${index * 0.2}s` }}>
+              {char}
+            </span>
+          ))}
+        </div>
         ) : (
           <>
-            <Cropper
-              src={imageObjectURL}
-              style={{ height: 600, width: 600 }}
-              // Cropper.js options
-              initialAspectRatio={1}
-              aspectRatio={1}
-              cropBoxResizable={false}
-              minCropBoxHeight={270}
-              minContainerHeight={270}
-              controls={true}
-              guides={true}
-              //crop={onCrop}
-              ref={cropperRef}
-              shape="round"
-            />
-            {!croppedimageObjectURL &&imageObjectURL && (
-              <button
-                onClick={onCrop}
-                className="bg-white p-[8px] rounded-md flex flex-row gap-2"
-              >
-                <CircleCheckBig /> Confirm
-              </button>
+            {" "}
+            {croppedimageObjectURL !== "" ? (
+              <canvas
+                ref={canvasRef}
+                className="size-[270px] rounded-[50%]"
+              ></canvas>
+            ) : (
+              <>
+                <Cropper
+                  src={imageObjectURL}
+                  style={{ height: 600, width: 600 }}
+                  // Cropper.js options
+                  initialAspectRatio={1}
+                  aspectRatio={1}
+                  cropBoxResizable={false}
+                  minCropBoxHeight={270}
+                  minContainerHeight={270}
+                  controls={true}
+                  guides={true}
+                  //crop={onCrop}
+                  ref={cropperRef}
+                  shape="round"
+                />
+                {!croppedimageObjectURL && imageObjectURL && (
+                  <button
+                    onClick={onCrop}
+                    className="bg-white p-[8px] rounded-md flex flex-row gap-2"
+                  >
+                    <CircleCheckBig /> Confirm
+                  </button>
+                )}
+              </>
             )}
-          </>
-        )}
-
-        {!imageObjectURL && (
-          <>
-            <input
-              type="file"
-              name="img"
-              id="image"
-              onChange={handleImage}
-              className="hidden"
-            />
-            <label
-              htmlFor="image"
-              className="bg-white px-4 py-2 rounded cursor-pointer flex flex-row gap-2"
-            >
-              <ImagePlus />
-              Upload Image
-            </label>
+            {!imageObjectURL && (
+              <>
+                <input
+                  type="file"
+                  name="img"
+                  id="image"
+                  onChange={handleImage}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="image"
+                  className="bg-white px-4 py-2 rounded cursor-pointer flex flex-row gap-2"
+                >
+                  <ImagePlus />
+                  Upload Image
+                </label>
+              </>
+            )}
           </>
         )}
       </div>

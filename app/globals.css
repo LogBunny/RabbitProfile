@@ -8,3 +8,12 @@
   --background-end-rgb: 255, 255, 255;
 }
 
+@keyframes letter-blink {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}
+
+.letter-animation {
+  animation: letter-blink 1.4s infinite;
+}
