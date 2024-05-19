@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Cropper, { ReactCropperElement } from "react-cropper";
 import "cropperjs/dist/cropper.css";
 import { CircleCheckBig, Download, ImagePlus, Rabbit } from "lucide-react";
+import Link from "next/link";
 
 export default function Home() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -128,6 +129,8 @@ export default function Home() {
         >
           <Download /> Download
         </button>
+        <div className="text-slate-400 font-medium text-lg"></div>
+        <Link href={"https://x.com/ItsSamPerson"} className="text-slate-400 m-[16px] underline">Built with 😻 by Sam Person</Link>
       </div>
       <div className="min-h-screen flex justify-center items-center flex-1 flex-col gap-4">
         {loading ? (
