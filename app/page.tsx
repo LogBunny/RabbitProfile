@@ -26,6 +26,7 @@ export default function Home() {
   ];
   const [loading, setLoading] = useState(false);
   const [selectedColor, setSelectedColor] = useState("#ffff");
+  const [selectedOutlineColor, setSelectedOutlineColor] = useState("#0000");
   const [imageObjectURL, setImageObjectURL] = useState("");
   const [croppedimageObjectURL, setCroppedImageObjectURL] = useState("");
   const cropperRef = useRef<ReactCropperElement>(null);
@@ -61,11 +62,26 @@ export default function Home() {
       // Draw the image on the canvas centered
       const x = (canvas.width - drawWidth) / 2;
       const y = (canvas.height - drawHeight) / 2;
-      ctx.drawImage(img, x, y, drawWidth, drawHeight);
+      ctx.shadowColor = selectedOutlineColor;
+      ctx.shadowBlur = 0;
+
+      // X offset loop
+      for (var i = -2; i <= 2; i++) {
+        // Y offset loop
+        for (var j = -2; j <= 2; j++) {
+          // Set shadow offset
+          ctx.shadowOffsetX = i;
+          ctx.shadowOffsetY = j;
+
+          // Draw image with shadow
+          ctx.drawImage(img, i, j, drawWidth, drawHeight);
+        }
+      }
+      //ctx.drawImage(img, x, y, drawWidth, drawHeight);
     };
     img.src = croppedimageObjectURL;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }, [selectedColor, croppedimageObjectURL, imageObjectURL]);
+  }, [selectedColor, croppedimageObjectURL, selectedOutlineColor]);
 
   async function handleImage(event: any) {
     /*  const canvas = canvasRef.current;
@@ -118,6 +134,9 @@ export default function Home() {
               style={{ backgroundColor: `${color}` }}
               onClick={(e) => {
                 setSelectedColor(color);
+
+                //TODO: remove this line when adding the outline feature
+                setSelectedOutlineColor(color);
               }}
             ></div>
           ))}
@@ -130,17 +149,26 @@ export default function Home() {
           <Download /> Download
         </button>
         <div className="text-slate-400 font-medium text-lg"></div>
-        <Link href={"https://x.com/ItsSamPerson"} className="text-slate-400 m-[16px] underline">Built with 😻 by Sam Person</Link>
+        <Link
+          href={"https://x.com/ItsSamPerson"}
+          className="text-slate-400 m-[16px] underline"
+        >
+          Built with 😻 by Sam Person
+        </Link>
       </div>
       <div className="min-h-screen flex justify-center items-center flex-1 flex-col gap-4">
         {loading ? (
           <div className="text-white font-medium text-lg">
-          {Array.from("Processing Image...").map((char, index) => (
-            <span key={index} className="letter-animation" style={{ animationDelay: `${index * 0.2}s` }}>
-              {char}
-            </span>
-          ))}
-        </div>
+            {Array.from("Processing Image...").map((char, index) => (
+              <span
+                key={index}
+                className="letter-animation"
+                style={{ animationDelay: `${index * 0.2}s` }}
+              >
+                {char}
+              </span>
+            ))}
+          </div>
         ) : (
           <>
             {" "}
@@ -184,6 +212,7 @@ export default function Home() {
                   id="image"
                   onChange={handleImage}
                   className="hidden"
+                  accept="image/png, image/jpeg"
                 />
                 <label
                   htmlFor="image"
