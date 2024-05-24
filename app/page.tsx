@@ -3,7 +3,7 @@ import { removeBackground } from "@imgly/background-removal";
 import { useEffect, useRef, useState } from "react";
 import Cropper, { ReactCropperElement } from "react-cropper";
 import "cropperjs/dist/cropper.css";
-import { CircleCheckBig, Download, ImagePlus, Rabbit } from "lucide-react";
+import { CircleCheckBig, CircleX, Download, ImagePlus, Rabbit } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
@@ -140,6 +140,26 @@ export default function Home() {
               }}
             ></div>
           ))}
+        </div>
+        <div className="text-slate-400 font-medium text-lg">Border</div>
+        <div className="flex flex-wrap gap-4 min-h-20 min-w-10">
+          {colors.map((color, idx) => (
+            <div
+              key={idx}
+              className={`w-10 h-10 rounded-md`}
+              style={{ backgroundColor: `${color}` }}
+              onClick={(e) => {
+                setSelectedOutlineColor(color);
+              }}
+            ></div>
+          ))}
+          <div
+              key={999}
+              className={`w-10 h-10 rounded-md flex items-center justify-center border-2 border-white`}
+              onClick={(e) => {
+                setSelectedOutlineColor(selectedColor);
+              }}
+            ><CircleX color="white"/></div>
         </div>
         <div className="text-slate-400 font-medium text-lg">Export</div>
         <button
